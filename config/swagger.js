@@ -7,8 +7,8 @@ const swaggerDocument = {
   },
   servers: [
     {
-      url: 'http://localhost:5000',
-      description: 'Development server',
+      url: process.env.NODE_ENV === 'production' ? 'https://tajbite-backend.vercel.app' : 'http://localhost:5000', 
+      description: 'API Server',
     },
   ],
   paths: {

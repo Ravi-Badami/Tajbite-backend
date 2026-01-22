@@ -20,7 +20,7 @@ app.use(express.json());//ALlow us to accept the JSON data in the body
 
 app.use('/api-docs',swaggerUi.serve,swaggerUi.setup(swaggerDocument))
 const corsoptions={
-  origin:process.env.NODE_ENV==='production' ? 'https://tajbite.vercel.app/' : 'http://localhost:5173',
+  origin:process.env.NODE_ENV==='production' ? 'https://tajbite.vercel.app' : 'http://localhost:5173',
   credentials:true
 }
 
