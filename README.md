@@ -1,19 +1,60 @@
 # Tajbite Backend API
 
-This is the backend for Tajbite, a food ordering application. Built with Node.js, Express, and MongoDB.
+Tajbite Backend is a RESTful API built to support a food discovery and ordering platform. The system provides efficient dish management, search, filtering, and sorting capabilities while maintaining compatibility with an existing React frontend.
 
-## What I Built
+The backend is designed with modular architecture, performance optimization, and scalability in mind, making it suitable for real-world application use and future expansion.
 
-I created a RESTful API that handles dish management, search functionality, and filtering. The backend is designed to work seamlessly with the existing React frontend without breaking any UI components.
+---
 
-## Tech Stack
+## Overview
 
-- **Node.js** + **Express.js** - Server and routing
-- **MongoDB** + **Mongoose** - Database and ORM
-- **Swagger UI** - API documentation
-- **Express Validator** - Input validation
+The API exposes endpoints for managing dishes and retrieving food data with flexible query capabilities. Special attention has been given to response structure to ensure seamless integration with the frontend without requiring changes to existing UI components.
 
-## Getting Started
+Key goals of the system:
+
+* Maintain a clean and scalable backend architecture
+* Optimize database queries for fast read operations
+* Preserve frontend API contracts through controlled data transformation
+* Provide consistent validation and error handling
+* Offer clear and interactive API documentation using Swagger
+
+---
+
+## Technology Stack
+
+* Node.js and Express.js for server and routing
+* MongoDB and Mongoose for data persistence
+* Swagger (OpenAPI) for API documentation
+* Express Validator for request validation
+
+---
+
+## Architecture
+
+The backend follows a layered structure to separate concerns and improve maintainability.
+
+```
+Client (React)
+  ↓
+Routes → Controllers → Services → Repositories
+  ↓
+MongoDB
+```
+
+Responsibilities:
+
+* Routes: Define API endpoints and request flow
+* Controllers: Handle HTTP requests and responses
+* Services: Implement business logic
+* Repositories: Manage database interactions
+* Middlewares: Validation, error handling, and CORS
+* Transformers: Adapt database data to frontend-compatible formats
+
+This structure keeps the codebase modular and easier to test and extend.
+
+---
+
+## Setup and Installation
 
 ### Installation
 
@@ -22,158 +63,204 @@ cd backend
 npm install
 ```
 
+### Environment Configuration
 
-### Run the Server
+Create a `.env` file in the root directory:
 
-```bash
-npm run dev  # Development (with nodemon)
-npm start    # Production
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+NODE_ENV=development
 ```
 
-The server will run on `http://localhost:5000`
+### Running the Server
 
-### View API Documentation
+```bash
+npm run dev
+npm start
+```
 
-Once the server is running, visit:
+The server runs at:
+
+```
+http://localhost:5000
+```
+
+---
+
+## API Documentation
+
+Swagger UI is available at:
+
 ```
 http://localhost:5000/api-docs
 ```
 
-```
+It provides detailed endpoint definitions, request/response schemas, and an interface for testing APIs.
+
+---
 
 ## API Endpoints
 
 ### Dishes
 
-- `GET /api/dishes` - Get all dishes (supports filtering and sorting)
-- `GET /api/dishes/autocomplete?q=query` - Get search suggestions
-- `GET /api/dishes/search?q=query` - Search dishes (full results)
-- `GET /api/dishes/:id` - Get a specific dish
-- `POST /api/dishes` - Create a new dish
-- `PUT /api/dishes/:id` - Update a dish
-- `DELETE /api/dishes/:id` - Delete a dish
+* GET `/api/dishes` – Retrieve all dishes with filtering and sorting
+* GET `/api/dishes/autocomplete` – Get search suggestions
+* GET `/api/dishes/search` – Search dishes with full details
+* GET `/api/dishes/:id` – Retrieve a dish by ID
+* POST `/api/dishes` – Create a new dish
+* PUT `/api/dishes/:id` – Update a dish
+* DELETE `/api/dishes/:id` – Delete a dish
 
-### Query Parameters
+---
 
-**Filtering:**
-- `ratingMin=4.0` - Filter by minimum rating
-- `cuisine=Biryani` - Filter by cuisine type
+## Query Features
 
-**Sorting:**
-- `sort=rating` - Sort by rating (high to low)
-- `sort=cost_low` - Sort by price (low to high)
-- `sort=cost_high` - Sort by price (high to low)
+### Filtering
 
-**Examples:**
+* `ratingMin=4.0` – Filter by minimum rating
+* `cuisine=Biryani` – Filter by cuisine type
+
+### Sorting
+
+* `sort=rating` – Sort by rating (descending)
+* `sort=cost_low` – Sort by price (ascending)
+* `sort=cost_high` – Sort by price (descending)
+
+### Example Requests
+
 ```
 GET /api/dishes?sort=rating&ratingMin=4.0
 GET /api/dishes?cuisine=North Indian&sort=cost_low
 ```
 
-## Key Features & Design Decisions
+---
 
-### 1. Frontend-Compatible Response Format
+## Key Design Decisions
 
-The frontend expects a specific nested structure (`card.card.info`), so I made sure all responses match this format exactly. This way, the backend can be integrated without changing any frontend code.
+### Frontend-Compatible Response Structure
 
-### 2. Performance Optimizations
+The frontend expects a nested response format similar to Swiggy’s API (`card.card.info`).
+To avoid modifying frontend logic, the backend implements a transformation layer that maps MongoDB documents into the required structure while keeping the database schema simple and maintainable.
 
-- **`.lean()` queries** - Used Mongoose's `.lean()` method to skip hydration and get plain JavaScript objects. This improves query performance by 5-10x, especially important for search and filtering operations.
+---
 
-- **Query projection** - Only fetch required fields from the database to reduce payload size.
+### Database Query Optimization
 
-- **Debouncing handled on frontend** - The autocomplete endpoint is designed to work with the frontend's 200ms debounce, preventing unnecessary database calls.
+Several techniques are used to improve performance:
 
-### 3. Search Implementation
+* Lean queries (`.lean()`) to reduce overhead from Mongoose document hydration
+* Field projection to limit unnecessary data in responses
+* Efficient regex-based search for autocomplete and partial matches
 
-I built two separate endpoints for search:
+These optimizations help reduce latency, especially for search and filtering endpoints.
 
-- **Autocomplete** (`/autocomplete`) - Returns just dish names for quick suggestions as you type
-- **Full Search** (`/search`) - Returns complete dish details with nested structure
+---
 
-Both use case-insensitive regex matching (`$regex` with `$options: 'i'`) to handle partial matches.
+### Search Implementation
 
-### 4. Error Handling
+Two separate endpoints are provided:
 
-Implemented centralized error handling middleware instead of try-catch blocks everywhere. All errors go through one place, making debugging easier and responses consistent.
+* Autocomplete API: returns lightweight dish name suggestions
+* Search API: returns full dish details
 
-### 5. Input Validation
+Both endpoints use case-insensitive matching to support partial queries.
 
-Used `express-validator` on POST routes to validate incoming data before it hits the database. This prevents bad data from entering the system.
+---
 
-### 6. CORS Configuration
+### Centralized Error Handling
 
-Set up environment-specific CORS:
-- Development: Allows `localhost:5173` (Vite default)
-- Production: Allows the deployed frontend domain
+A global error-handling middleware ensures consistent error responses and reduces repetitive error handling logic across controllers.
 
-### 7. Controller-Based Architecture
+---
 
-Separated business logic into controllers instead of putting everything in route files. This makes the code cleaner and easier to test.
+### Input Validation
 
-## Problems I Solved
+Request payloads are validated using Express Validator before database operations, preventing invalid data from being stored.
 
-### Problem 1: Frontend Expects Swiggy API Format
+---
 
-**Issue:** The frontend was built to work with Swiggy's API structure, which has deeply nested objects.
+### CORS Configuration
 
-**Solution:** Created a transformation layer in the controller that takes our clean MongoDB data and wraps it in the exact nested format the frontend expects. This way, I could keep a simple database schema while maintaining frontend compatibility.
+CORS policies are configured based on environment:
 
-### Problem 2: MongoDB Connection Timeout
+* Development: allows `localhost:5173`
+* Production: allows the deployed frontend domain
 
-**Issue:** The seed script was trying to insert data before the database connection was established, causing timeout errors.
+---
 
-**Solution:** Made the database connection async and added `await connectDB()` before any database operations. Also added proper error handling for connection failures.
+## Engineering Challenges
 
-### Problem 3: Route Ordering Issues
+### API Contract Compatibility
 
-**Issue:** Routes like `/search` weren't working because Express was treating "search" as an ID parameter in `/:id`.
+The frontend was built to consume a specific nested API structure.
+To maintain compatibility, a dedicated transformation layer was introduced to adapt backend data without altering the database model.
 
-**Solution:** Put specific routes (`/autocomplete`, `/search`) before parameterized routes (`/:id`). Order matters in Express routing!
+---
 
-### Problem 4: Query Performance
+### MongoDB Connection Timing
 
-**Issue:** Fetching all dishes was slow because Mongoose was hydrating full documents even though we just needed to send JSON.
+Initial seeding scripts attempted database operations before the connection was established.
+This was resolved by enforcing asynchronous connection handling and awaiting the database connection before executing queries.
 
-**Solution:** Added `.lean()` to all read queries. This bypasses Mongoose's document creation and returns plain objects, which are much faster for API responses.
+---
 
-## Best Practices Implemented
+### Route Resolution Conflicts
 
-✅ **Environment variables** - Sensitive data like MongoDB URI stored in `.env`  
-✅ **MVC pattern** - Controllers separate from routes  
-✅ **Error handling middleware** - Centralized error management  
-✅ **Input validation** - Data validated before database operations  
-✅ **API documentation** - Swagger UI for easy testing  
-✅ **Clean code structure** - Organized into logical folders  
-✅ **Async/await** - Modern promise handling throughout  
-✅ **Lean queries** - Performance optimization for read operations  
+Static routes such as `/search` and `/autocomplete` were being interpreted as dynamic parameters due to route ordering.
+Reordering routes resolved the issue.
+
+---
+
+### Query Performance Bottlenecks
+
+Mongoose document hydration caused unnecessary overhead for read-heavy endpoints.
+Applying lean queries improved response times significantly.
+
+---
 
 ## Database Seeding
 
-To populate the database with sample dishes:
+To populate the database with sample data:
 
 ```bash
 node seed.js
 ```
 
-This will:
-1. Clear existing dishes
-2. Insert 14 sample dishes with different cuisines, prices, and ratings
-3. Exit automatically
+The script clears existing records and inserts sample dishes across multiple cuisines.
 
-Current seed data includes Indian, Italian, Chinese, and Middle Eastern dishes.
+---
 
-## What Could Be Added Later
+## Scalability and Future Improvements
 
-- **Authentication** - JWT-based user authentication
-- **Pagination** - For large datasets (currently returns all results)
-- **Rate limiting** - Prevent API abuse
-- **Caching** - Redis for frequently accessed data
-- **Image upload** - Cloudinary integration for dish images
-- **Reviews** - User reviews and ratings system
+Potential enhancements include:
 
-## Notes
+* Authentication and authorization using JWT
+* Pagination for large datasets
+* Redis-based caching for frequently accessed endpoints
+* Rate limiting and API throttling
+* Image upload and storage integration
+* User reviews and ratings
+* API versioning
+* Structured logging and monitoring
+* Unit and integration testing
 
-The backend is designed to be stateless and RESTful. All endpoints return JSON and use standard HTTP status codes. The error responses are consistent across all endpoints.
+---
 
-I chose MongoDB because the data structure (dishes with nested restaurant info) fits well with NoSQL's flexibility. If I were to scale this, I'd consider separating Restaurants into their own collection with references.
+## Design Considerations
+
+MongoDB was chosen due to its flexibility in handling nested dish and restaurant data.
+For larger systems, restaurant data can be separated into dedicated collections with references to improve scalability and maintainability.
+
+The backend is designed to be stateless and extensible, making it suitable for future architectural evolution.
+
+---
+
+## If you want, I can also:
+
+* Rewrite this into a shorter, sharper version for recruiters
+* Create a “system design” section that looks senior-level
+* Rewrite your resume description for this project
+* Make your GitHub repo structure look like a real production backend
+
+If you want, I can also make it sound slightly more technical and less descriptive — which is what top backend engineers usually do.
